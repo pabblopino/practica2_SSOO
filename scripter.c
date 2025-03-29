@@ -110,8 +110,51 @@ int procesar_linea(char *linea) {
 int main(int argc, char *argv[]) {
 
     /* STUDENTS CODE MUST BE HERE */
-    char example_line[] = "ls -l | grep scripter | wc -l > redir_out.txt &";
-    int n_commands = procesar_linea(example_line);
-    
+    // char example_line[] = "ls -l | grep scripter | wc -l > redir_out.txt &";
+    // int n_commands = procesar_linea(example_line);
+
+    /*Empiezo mi código*/
+    if (argc != 2){
+        perror("El formato de ejecución no es válido: ./scripter.c <nombre_fichero>");
+        exit(1);
+    }
+
+    char *fichero_entrada = argv[1]; // Asigno el nombre de mi fichero de entrada a una variable
+    char buffer[max_line]; // Declaro el buffer con el tamaño máximo de línea
+    char *p = buffer; // Declaro mi puntero
+    int n_bytes, fd_entrada, num_comandos;
+    int primera_linea = 0;
+
+    if ((fd_entrada = open(fichero_entrada, O_RDONLY)) < 0){ // Abro el fichero de entrada y guardo su descriptor de fichero
+        perror("Error al abrir el fichero de entrada");
+        exit(2);
+    } 
+
+    while ((n_bytes = read(fd_entrada, p, 1)) > 0){
+        printf("buffer: %s", buffer);
+        if (*p == '\n'){ // Comprobamos si en la lectura se llega a un salto de línea
+            if (primera_linea == 0){ // Comprobamos que la primera línea es correcta
+                if (strcmp(buffer, "## Script de SSOO") != 0){
+                    printf("buffer final: %s", buffer);
+                    perror("La primera línea es distinta de: ## Script de SSOO");
+                }
+
+                *p = '\0'; // Delimitamos el final de la línea en el buffer
+                primera_linea = 1; // Marcamos la primera línea ya leída
+                p = buffer; // Volvemos a apuntar p al principio del buffer
+            } 
+            *p = '\0'; // Delimitamos el final de la línea en el buffer
+            num_comandos = procesar_linea(buffer); // Procesamos la línea
+            printf("El número de comandos es: %d", num_comandos);
+            p = buffer; // Volvemos a apuntar p al principio del buffer
+        }
+        else
+            p++; // Incrementamos el puntero byte a byte
+    }
+
+    // Caso de la última línea, donde no se encuentra \n antes del final
+    num_comandos = procesar_linea(buffer); // Procesamos la última línea
+    printf("El número de comandos es: %d", num_comandos);
+
     return 0;
 }
