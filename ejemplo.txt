@@ -1,4 +1,4 @@
 ## Script de SSOO
-ls -l
+ls -l | ls
 ls
 cat hola

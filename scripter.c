@@ -84,6 +84,7 @@ int procesar_linea(char *linea) {
     //Finish processing
     for (int i = 0; i < num_comandos; i++) {
         int args_count = tokenizar_linea(comandos[i], " \t\n", argvv, max_args);
+        printf("%s, %s, %s\n", argvv[0], argvv[1], argvv[2]);
         procesar_redirecciones(argvv);
 
         /********* This piece of code prints the command, args, redirections and background. **********/
@@ -131,30 +132,29 @@ int main(int argc, char *argv[]) {
     } 
 
     while ((n_bytes = read(fd_entrada, p, 1)) > 0){
-        printf("buffer: %s", buffer);
-        if (*p == '\n'){ // Comprobamos si en la lectura se llega a un salto de línea
+        if (*p == '\n' || *p == '\0'){ // Comprobamos si en la lectura se llega a un salto de línea
+            *p = '\0'; // Delimitamos el final de la línea en el buffer
             if (primera_linea == 0){ // Comprobamos que la primera línea es correcta
                 if (strcmp(buffer, "## Script de SSOO") != 0){
-                    printf("buffer final: %s", buffer);
+                    close(fd_entrada);
                     perror("La primera línea es distinta de: ## Script de SSOO");
+                    exit(3);
                 }
 
-                *p = '\0'; // Delimitamos el final de la línea en el buffer
                 primera_linea = 1; // Marcamos la primera línea ya leída
                 p = buffer; // Volvemos a apuntar p al principio del buffer
-            } 
-            *p = '\0'; // Delimitamos el final de la línea en el buffer
-            num_comandos = procesar_linea(buffer); // Procesamos la línea
-            printf("El número de comandos es: %d", num_comandos);
-            p = buffer; // Volvemos a apuntar p al principio del buffer
+
+            }
+            else{ 
+                printf("buffer linea: %s\n", buffer);
+                num_comandos = procesar_linea(buffer); // Procesamos la línea
+                printf("El número de comandos es: %d\n", num_comandos);
+                p = buffer; // Volvemos a apuntar p al principio del buffer
+            }
         }
         else
             p++; // Incrementamos el puntero byte a byte
     }
-
-    // Caso de la última línea, donde no se encuentra \n antes del final
-    num_comandos = procesar_linea(buffer); // Procesamos la última línea
-    printf("El número de comandos es: %d", num_comandos);
 
     return 0;
 }
