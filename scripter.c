@@ -70,6 +70,7 @@ void procesar_redirecciones(char *args[]) {
  * background -- 0 means foreground; 1 background.
  */
 int procesar_linea(char *linea) {
+    background = 0;
     char *comandos[max_commands];
     int num_comandos = tokenizar_linea(linea, "|", comandos, max_commands);
 
@@ -90,6 +91,25 @@ int procesar_linea(char *linea) {
         /********* This piece of code prints the command, args, redirections and background. **********/
         /*********************** REMOVE BEFORE THE SUBMISSION *****************************************/
         /*********************** IMPLEMENT YOUR CODE FOR PROCESSES MANAGEMENT HERE ********************/
+        pid_t pid;
+
+        if (num_comandos == 1){ // Caso de comandos simples
+            
+            if ((pid = fork()) < 0){
+                perror("Error al crear el fork");
+                exit(4);
+            }
+
+            if (pid == 0){ // Lo realiza el hijo
+                execvp(argvv[0], argvv);
+                exit(5);
+            }
+
+            else{ // Lo realiza el padre
+                sleep(1);
+                wait(NULL);
+            }
+        }
         printf("Comando = %s\n", argvv[0]);
         for(int arg = 1; arg < max_args; arg++)
             if(argvv[arg] != NULL)
