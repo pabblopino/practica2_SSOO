@@ -1,4 +1,3 @@
 ## Script de SSOO
 ls -l
-ls
-cat ejemplo.txt
+who &

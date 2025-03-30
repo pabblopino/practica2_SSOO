@@ -85,7 +85,6 @@ int procesar_linea(char *linea) {
     //Finish processing
     for (int i = 0; i < num_comandos; i++) {
         int args_count = tokenizar_linea(comandos[i], " \t\n", argvv, max_args);
-        printf("%s, %s, %s\n", argvv[0], argvv[1], argvv[2]);
         procesar_redirecciones(argvv);
 
         /********* This piece of code prints the command, args, redirections and background. **********/
@@ -106,10 +105,17 @@ int procesar_linea(char *linea) {
             }
 
             else{ // Lo realiza el padre
-                sleep(1);
-                wait(NULL);
+                if (!background){
+                    // Si el comando es en primer plano, esperamos que finalice el hijo
+                    wait(NULL);
+                } 
+                else{
+                    // Si es en background, mostramos el PID y no esperamos
+                    printf("Proceso en background con PID: %d\n", pid);
+                }
             }
         }
+        
         printf("Comando = %s\n", argvv[0]);
         for(int arg = 1; arg < max_args; arg++)
             if(argvv[arg] != NULL)
