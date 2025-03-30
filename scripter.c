@@ -115,7 +115,37 @@ int procesar_linea(char *linea) {
                 }
             }
         }
-        
+
+        if (num_comandos > 1){
+            int i = 0;
+            while i < num_comandos{
+                int fd[2]; // Creamos 2 ficheros en cada iteración del bucle (Falta hacerlo)
+                if ((pid = fork()) < 0){
+                    perror("Error al crear el fork");
+                    exit(4);
+                }
+
+                if (pid == 0){ // Lo realiza el hijo
+                    if (num_comandos - i == num_comandos){ // Caso primer comando, crea un pipe, pero no lee de ninguno
+
+                    }
+
+                    if (num_comandos - i == 1){ // Caso último comando, lee de un pipe, pero no crea ninguno (podemos hacer que lo haga el padre)
+                        exit(0);
+                    }
+
+                    else{ // Caso estándar, lee del pipe anterior y crea y escribe en el siguiente
+
+                    }
+                }
+
+                else{ // Lo realiza el padre
+                    wait(NULL);
+                }
+
+            }
+
+        }
         printf("Comando = %s\n", argvv[0]);
         for(int arg = 1; arg < max_args; arg++)
             if(argvv[arg] != NULL)
