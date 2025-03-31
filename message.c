@@ -69,25 +69,47 @@ int procesar_linea(char *linea) {
     // Detecta si se debe ejecutar en background buscando el '&'
     if (strchr(comandos[num_comandos - 1], '&')) {
         background = 1;
-        char *pos = strchr(comandos[num_comandos - 1], '&'); 
+        char *pos = strchr(comandos[num_comandos - 1], '&');
         *pos = '\0';  // Se elimina el caracter '&'
     }
 
-    // En este ejemplo solo manejamos comandos simples sin pipes
+    // Creamos un array para almacenar los descriptores de archivo de las tuberías
+    int fd[max_commands - 1][2];
+    
+    // Creamos las tuberías necesarias (una menos que el número de comandos)
+    for (int i = 0; i < num_comandos - 1; i++) {
+        if (pipe(fd[i]) < 0) {
+            perror("Error al crear la tubería");
+            exit(9);
+        }
+    }
+
+    pid_t pids[max_commands];
+    
+    // Procesamos cada comando de la secuencia
     for (int i = 0; i < num_comandos; i++) {
         // Se tokeniza el comando para obtener el programa y sus argumentos
-        int args_count = tokenizar_linea(comandos[i], " \t\n", argvv, max_args);
+        char *args[max_args];
+        int args_count = tokenizar_linea(comandos[i], " \t\n", args, max_args);
+        
+        // Inicializar argvv con los argumentos tokenizados
+        for (int j = 0; j <= args_count; j++) {
+            argvv[j] = args[j];
+        }
+        
         procesar_redirecciones(argvv);
 
-        pid_t pid;
-        if ((pid = fork()) < 0) {
+        if ((pids[i] = fork()) < 0) {
             perror("Error al crear el fork");
             exit(4);
         }
 
-        if (pid == 0) { // Proceso hijo
-            // Manejo de redirección de entrada
-            if (filev[0]) {
+        if (pids[i] == 0) { // Proceso hijo
+            // Conexión de tuberías para entrada (excepto el primer comando)
+            if (i > 0) {
+                dup2(fd[i - 1][0], STDIN_FILENO);
+            }
+            else if (filev[0]) { // Redirección de entrada solo para el primer comando
                 int fd_in = open(filev[0], O_RDONLY);
                 if (fd_in < 0) {
                     perror("Error al abrir el archivo de entrada");
@@ -96,8 +118,12 @@ int procesar_linea(char *linea) {
                 dup2(fd_in, STDIN_FILENO);
                 close(fd_in);
             }
-            // Manejo de redirección de salida
-            if (filev[1]) {
+            
+            // Conexión de tuberías para salida (excepto el último comando)
+            if (i < num_comandos - 1) {
+                dup2(fd[i][1], STDOUT_FILENO);
+            }
+            else if (filev[1]) { // Redirección de salida solo para el último comando
                 int fd_out = open(filev[1], O_WRONLY | O_CREAT | O_TRUNC, 0644);
                 if (fd_out < 0) {
                     perror("Error al abrir el archivo de salida");
@@ -106,7 +132,8 @@ int procesar_linea(char *linea) {
                 dup2(fd_out, STDOUT_FILENO);
                 close(fd_out);
             }
-            // Manejo de redirección de error
+            
+            // Redirección de error (para cualquier comando)
             if (filev[2]) {
                 int fd_err = open(filev[2], O_WRONLY | O_CREAT | O_TRUNC, 0644);
                 if (fd_err < 0) {
@@ -116,19 +143,36 @@ int procesar_linea(char *linea) {
                 dup2(fd_err, STDERR_FILENO);
                 close(fd_err);
             }
+            
+            // Cerramos todos los descriptores de archivo de las tuberías que no usamos
+            for (int j = 0; j < num_comandos - 1; j++) {
+                close(fd[j][0]);
+                close(fd[j][1]);
+            }
             execvp(argvv[0], argvv);
             perror("Error en execvp");
             exit(5);
-        } else { // Proceso padre
-            if (!background) {
-                // Si el comando es en primer plano, esperamos que finalice el hijo
-                waitpid(pid, NULL, 0);
-            } else {
-                // Si es en background, mostramos el PID y no esperamos
-                printf("Proceso en background con PID: %d\n", pid);
-            }
         }
     }
+    
+    // El proceso padre cierra todos los descriptores de archivo de las tuberías
+    for (int i = 0; i < num_comandos - 1; i++) {
+        close(fd[i][0]);
+        close(fd[i][1]);
+    }
+    
+    // Manejo de background: Mostrar PIDs de todos los hijos si es background
+    if (background) {
+        for (int i = 0; i < num_comandos; i++) {
+            printf("Proceso %d en background con PID: %d\n", i, pids[i]);
+        }
+    } else {
+        // Si no es background, esperamos a que todos los procesos hijos terminen
+        for (int i = 0; i < num_comandos; i++) {
+            waitpid(pids[i], NULL, 0);
+        }
+    }
+    
     return num_comandos;
 }
 

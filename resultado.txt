@@ -1,0 +1,14 @@
+drwxrwxr-x 2 pablo pablo  4096 mar 29 12:09 p2_scripter
+-rw-r--r-- 1 pablo pablo     0 mar 31 17:58 error.txt
+-rw-r--r-- 1 pablo pablo     0 mar 31 17:58 resultado.txt
+-rw-rw-r-- 1 pablo pablo     0 mar 31 17:12 entrada.txt
+-rw-rw-r-- 1 pablo pablo     0 mar 31 17:12 salida.txt
+-rw-rw-r-- 1 pablo pablo    30 mar 30 12:43 ejemplo.txt
+-rw-rw-r-- 1 pablo pablo   119 mar 31 17:00 ejemplo2.txt
+-rw-rw-r-- 1 pablo pablo  7080 mar 31 17:47 message.c
+-rwxrwxr-x 1 pablo pablo   318 mar  3 15:45 Makefile
+-rwxrwxr-x 1 pablo pablo  1289 mar 31 17:38 mygrep.c
+-rwxrwxr-x 1 pablo pablo  8266 mar 31 17:58 scripter.c
+-rwxrwxr-x 1 pablo pablo 16856 mar 31 17:48 message
+-rwxrwxr-x 1 pablo pablo 16856 mar 31 17:58 scripter
+total 80

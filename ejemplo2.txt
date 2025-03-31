@@ -1,0 +1,6 @@
+## Script de SSOO
+ls
+cat < entrada.txt > salida.txt
+who !> error.txt &
+ls -l | sort > resultado.txt
+ls -l | sort | wc &
