@@ -1,3 +1,4 @@
 ## Script de SSOO
+sleep 5 
 ls -l
-who &
+who

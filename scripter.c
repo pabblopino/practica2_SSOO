@@ -15,7 +15,9 @@ const int max_commands = 10;
 /* VARS TO BE USED FOR THE STUDENTS */
 char * argvv[max_args];
 char * filev[max_redirections];
-int background = 0; 
+int background = 0;
+int contador_zombies = 0;
+pid_t pids_zombies[10];
 
 /**
  * This function splits a char* line into different tokens based on a given character
@@ -61,6 +63,17 @@ void procesar_redirecciones(char *args[]) {
             args[i + 1] = NULL;
         }
     }
+}
+
+int recoger_zombies(int contador_zombies, pid_t pids_zombies[]){
+    int i = 0;
+    for (i = 0; i < contador_zombies; i++){
+        while (waitpid(pids_zombies[i], NULL, WNOHANG) == 0){
+            sleep(1);
+        }
+        printf("Proceso zombie con PID %d eliminado.\n", pids_zombies[i]);
+    }
+    return 0;
 }
 
 /**
@@ -155,6 +168,7 @@ int procesar_linea(char *linea) {
             // Cerramos todos los descriptores de archivo de las tuberías que no usamos
             for (int j = 0; j < num_comandos - 1; j++) {
                 close(fd[j][0]);
+
                 close(fd[j][1]);
             }
             execvp(argvv[0], argvv);
@@ -172,8 +186,10 @@ int procesar_linea(char *linea) {
     // Manejo de background: Mostrar PIDs de todos los hijos si es background
     if (background) {
         for (int i = 0; i < num_comandos; i++) {
-            printf("Proceso %d en background con PID: %d\n", i, pids[i]);
+            pids_zombies[contador_zombies] = pids[i];
+            contador_zombies++;
         }
+        printf("Proceso %d en background con PID: %d\n", num_comandos - 1, pids[num_comandos - 1]);
     } else {
         // Si no es background, esperamos a que todos los procesos hijos terminen
         for (int i = 0; i < num_comandos; i++) {
@@ -231,7 +247,9 @@ int main(int argc, char *argv[]) {
         else
             p++; // Incrementamos el puntero byte a byte
     }
-
+    if (contador_zombies > 0){
+        recoger_zombies(contador_zombies, pids_zombies);
+        }
     close(fd_entrada);
     return 0;
 }
