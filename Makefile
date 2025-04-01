@@ -6,7 +6,7 @@ CFLAGS=-I.
 
 # MODIFIED ME ##
 
-OBJ = scripter.o 
+OBJ = scripter.o
 
 all: scripter
 

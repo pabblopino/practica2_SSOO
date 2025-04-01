@@ -13,9 +13,14 @@ int main(int argc, char ** argv) {
     }
 
     int fd, n_bytes;
+    int buffer_size = initial_size;
     int linea = 0;
     int found = 0;
-    char *buffer = malloc(initial_size);
+    char *buffer = malloc(buffer_size);
+    if (!buffer) {
+        perror("man 3 perror");
+        return -1;
+    }
     char *p = buffer;
 
 
@@ -25,6 +30,20 @@ int main(int argc, char ** argv) {
     }
 
     while ((n_bytes = read(fd, p, 1)) > 0){
+        if (p - buffer >= buffer_size - 1){
+            int new_size = buffer_size * 2;
+            char *new_buffer = realloc(buffer, new_size);
+            if (!new_buffer) {
+                perror("man 3 perror");
+                free(buffer);
+                close(fd);
+                return -1;
+            }
+            p = new_buffer + (p - buffer);
+            buffer = new_buffer;
+            buffer_size = new_size;
+        }
+            
         if (*p == '\n' || *p == '\0'){
             *p = '\0'; // Delimitamos el final de la línea en el buffer
             p = buffer; // Volvemos a apuntar p al principio del buffer
@@ -43,16 +62,7 @@ int main(int argc, char ** argv) {
         printf("%s not found.\n", argv[2]);
     }
     
+    free(buffer);
     close(fd);
     return 0;
 }
-
-    /*if ((pid = fork()) < 0){
-        perror("man 3 perror");
-        exit(2);
-    }
-
-    if (pid == 0){ // Ejecuta el proceso hijo
-        
-        exit(0);
-    }*/
