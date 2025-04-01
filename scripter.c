@@ -43,6 +43,7 @@ int tokenizar_linea(char *linea, char *delim, char *tokens[], int max_tokens) {
  */
 void procesar_redirecciones(char *args[]) {
     //initialization for every command
+    int j = 0;
     filev[0] = NULL;
     filev[1] = NULL;
     filev[2] = NULL;
@@ -53,16 +54,22 @@ void procesar_redirecciones(char *args[]) {
             filev[0] = args[i+1];
             args[i] = NULL;
             args[i + 1] = NULL;
+            i++; // Saltamos otra vez para llegar al siguiente argumento
         } else if (strcmp(args[i], ">") == 0) {
             filev[1] = args[i+1];
             args[i] = NULL;
             args[i + 1] = NULL;
+            i++;
         } else if (strcmp(args[i], "!>") == 0) {
             filev[2] = args[i+1];
             args[i] = NULL; 
             args[i + 1] = NULL;
+            i++;
+        } else{
+            args[j++] = args[i];
         }
     }
+    args[j] = NULL;
 }
 
 int recoger_zombies(int contador_zombies, pid_t pids_zombies[]){
@@ -109,7 +116,7 @@ int procesar_linea(char *linea) {
     pid_t pids[max_commands];
 
     //Finish processing
-    for (int i = 0; i < num_comandos; i++) { // MIRAR SI SE PUEDE ESCRIBIR AQUÍ O NO
+    for (int i = 0; i < num_comandos; i++) {
         // Se tokeniza el comando para obtener el programa y sus argumentos
         char *args[max_args];
         int args_count = tokenizar_linea(comandos[i], " \t\n", argvv, max_args);
@@ -128,9 +135,9 @@ int procesar_linea(char *linea) {
         if (pids[i] == 0) { // Proceso hijo
             // Conexión de tuberías para entrada (excepto el primer comando)
             if (i > 0) {
-                dup2(fd[i - 1][0], STDIN_FILENO);
+                dup2(fd[i - 1][0], STDIN_FILENO); // Bien
             }
-            else if (filev[0]) { // Redirección de entrada solo para el primer comando
+            else if (filev[0]) { // Redirección de entrada solo para el primer comando // Bien
                 int fd_in = open(filev[0], O_RDONLY);
                 if (fd_in < 0) {
                     perror("Error al abrir el archivo de entrada");
@@ -142,9 +149,9 @@ int procesar_linea(char *linea) {
             
             // Conexión de tuberías para salida (excepto el último comando)
             if (i < num_comandos - 1) {
-                dup2(fd[i][1], STDOUT_FILENO);
+                dup2(fd[i][1], STDOUT_FILENO); // Bien
             }
-            else if (filev[1]) { // Redirección de salida solo para el último comando
+            else if (filev[1]) { // Redirección de salida solo para el último comando // Bien
                 int fd_out = open(filev[1], O_WRONLY | O_CREAT | O_TRUNC, 0644);
                 if (fd_out < 0) {
                     perror("Error al abrir el archivo de salida");
@@ -154,7 +161,7 @@ int procesar_linea(char *linea) {
                 close(fd_out);
             }
             
-            // Redirección de error (para cualquier comando)
+            // Redirección de error (para cualquier comando) // Bien
             if (filev[2]) {
                 int fd_err = open(filev[2], O_WRONLY | O_CREAT | O_TRUNC, 0644);
                 if (fd_err < 0) {
@@ -168,7 +175,6 @@ int procesar_linea(char *linea) {
             // Cerramos todos los descriptores de archivo de las tuberías que no usamos
             for (int j = 0; j < num_comandos - 1; j++) {
                 close(fd[j][0]);
-
                 close(fd[j][1]);
             }
             execvp(argvv[0], argvv);
